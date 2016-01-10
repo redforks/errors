@@ -55,6 +55,10 @@ const (
 	// expected, return error with detail and precise reason. Of course, do not
 	// need report to error report service or health monitor service.
 	ByInput
+
+	// A special value returned by GetPanicCausedBy() to indicate no error
+	// happened
+	NoError
 )
 
 type errorWrap struct {
@@ -145,5 +149,20 @@ func GetCausedBy(e error) CausedBy {
 	if err, ok := e.(Error); ok {
 		return err.CausedBy()
 	}
+	return ByBug
+}
+
+// Resolve caused for recover() return value, if the value is nil, return
+// NoError. For error value use GetCausedBy() to resolve, other value return
+// ByBug.
+func GetPanicCausedBy(v interface{}) CausedBy {
+	if v == nil {
+		return NoError
+	}
+
+	if val, ok := v.(error); ok {
+		return GetCausedBy(val)
+	}
+
 	return ByBug
 }

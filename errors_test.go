@@ -63,4 +63,20 @@ var _ = bdd.Describe("errors", func() {
 		})
 
 	})
+
+	bdd.Context("GetPanicCausedBy", func() {
+
+		bdd.It("nil", func() {
+			assert.Equal(t(), errors.NoError, errors.GetPanicCausedBy(nil))
+		})
+
+		bdd.It("error", func() {
+			assert.Equal(t(), errors.ByInput, errors.GetPanicCausedBy(errors.Input("foo")))
+		})
+
+		bdd.It("Other value", func() {
+			assert.Equal(t(), errors.ByBug, errors.GetPanicCausedBy(0))
+		})
+
+	})
 })
