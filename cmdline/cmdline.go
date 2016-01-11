@@ -6,7 +6,13 @@
 // redforks/life package to cover service goroutines.
 package cmdline
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"runtime/debug"
+
+	"github.com/redforks/errors"
+)
 
 type exitError int
 
@@ -29,16 +35,28 @@ type MainFunc func() error
 // handle error by errors.CausedBy rule.
 func Go(main MainFunc) {
 	defer func() {
-		handlePanic(recover())
+		handleError(recover())
 	}()
 
 	handleError(main())
 }
 
-func handlePanic(v interface{}) {
-	// TODO: Maybe errors.GetCausedBy() should accept any value
-}
+func handleError(v interface{}) {
+	if err, ok := v.(exitError); ok {
+		os.Exit(int(err))
+		return
+	}
 
-func handleError(err error) {
-
+	switch errors.GetPanicCausedBy(v) {
+	case errors.NoError:
+	case errors.ByBug, errors.ByRuntime:
+		fmt.Fprintln(os.Stderr, v)
+		debug.PrintStack()
+		os.Exit(-1)
+	case errors.ByInput, errors.ByExternal:
+		fmt.Println(v)
+		os.Exit(1)
+	default:
+		panic("Unknown CausedBy")
+	}
 }
