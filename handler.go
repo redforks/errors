@@ -2,6 +2,8 @@ package errors
 
 import (
 	"log"
+	"os"
+	"strings"
 
 	"golang.org/x/net/context"
 )
@@ -26,10 +28,24 @@ func Handle(ctx context.Context, err interface{}) {
 // SetHandler switch error handler, NOTE: no sync lock to internal handler
 // variable, only call SetHandler in application initialization code, to
 // prevent data race.
+// If h is nil, reset to default handler, this feature only available in test
+// mode for unit tests to override error handler.
 func SetHandler(h Handler) {
+	if h == nil {
+		if !inTestMode() {
+			log.Panicf("[errors] Handler can not be nil")
+		}
+		handler = defaultHandler
+		return
+	}
+
 	handler = h
 }
 
 func defaultHandler(ctx context.Context, err interface{}) {
 	log.Print(err)
+}
+
+func inTestMode() bool {
+	return strings.HasSuffix(os.Args[0], ".test")
 }
