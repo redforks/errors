@@ -9,7 +9,8 @@ package cmdline
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
+	"runtime"
+	"spork/life"
 
 	"github.com/redforks/errors"
 )
@@ -43,20 +44,27 @@ func Go(main MainFunc) {
 
 func handleError(v interface{}) {
 	if err, ok := v.(exitError); ok {
-		os.Exit(int(err))
+		life.Exit(int(err))
 		return
 	}
 
-	switch errors.GetPanicCausedBy(v) {
-	case errors.NoError:
+	cause := errors.GetPanicCausedBy(v)
+	if cause == errors.NoError {
+		return
+	}
+
+	errors.Handle(nil, v)
+
+	switch cause {
 	case errors.ByBug, errors.ByRuntime:
 		fmt.Fprintln(os.Stderr, v)
-		debug.PrintStack()
-		os.Exit(-1)
+		buf := make([]byte, 16*1024)
+		buf = buf[0:runtime.Stack(buf, true)]
+		fmt.Fprintln(os.Stderr, string(buf))
 	case errors.ByInput, errors.ByExternal:
 		fmt.Println(v)
-		os.Exit(1)
 	default:
 		panic("Unknown CausedBy")
 	}
+	life.Exit(int(cause) + 1)
 }
