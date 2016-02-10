@@ -96,23 +96,47 @@ func New(text string) Error {
 	}
 }
 
-// Create a ByBug error from exist error.
+// Create a ByBug error from exist error. If e is nil, return nil. It is safe
+// to write:
+//
+//  return errors.NewBug(exitFunc())
 func NewBug(e error) Error {
+	if e == nil {
+		return nil
+	}
 	return byBug{e}
 }
 
-// Create a ByRuntime error from exist error.
+// Create a ByRuntime error from exist error. If e is nil, return nil. It is
+// safe to write:
+//
+//  return errors.NewRuntime(exitFunc())
 func NewRuntime(e error) Error {
+	if e == nil {
+		return nil
+	}
 	return byRuntime{e}
 }
 
-// Create a ByExternal error from exist error.
+// Create a ByExternal error from exist error. If e is nil, return nil. It is
+// safe to write:
+//
+//  return errors.NewExternal(exitFunc())
 func NewExternal(e error) Error {
+	if e == nil {
+		return nil
+	}
 	return byExternal{e}
 }
 
-// Create a ByInput error from exist error.
+// Create a ByInput error from exist error. If e is nil, return nil. It is safe
+// to write:
+//
+//  return errors.NewInput(exitFunc())
 func NewInput(e error) Error {
+	if e == nil {
+		return nil
+	}
 	return byInput{e}
 }
 

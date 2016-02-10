@@ -36,6 +36,22 @@ var _ = bdd.Describe("errors", func() {
 		assertError(errors.NewInput(syserr.New("foo")), "foo", errors.ByInput)
 	})
 
+	bdd.It("NewBug - nil", func() {
+		assert.Nil(t(), errors.NewBug(nil))
+	})
+
+	bdd.It("NewRuntime - nil", func() {
+		assert.Nil(t(), errors.NewRuntime(nil))
+	})
+
+	bdd.It("NewInput - nil", func() {
+		assert.Nil(t(), errors.NewInput(nil))
+	})
+
+	bdd.It("NewExternal - nil", func() {
+		assert.Nil(t(), errors.NewExternal(nil))
+	})
+
 	bdd.It("Bug", func() {
 		assertError(errors.Bug("foo"), "foo", errors.ByBug)
 	})
