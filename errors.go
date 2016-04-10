@@ -15,7 +15,10 @@
 // fixed must report back.
 package errors
 
-import syserr "errors"
+import (
+	syserr "errors"
+	"fmt"
+)
 
 // Describe who caused this error.
 type CausedBy int
@@ -142,24 +145,33 @@ func NewInput(e error) Error {
 	return byInput{e}
 }
 
-// Create a text ByBug error
-func Bug(text string) Error {
-	return NewBug(syserr.New(text))
+// Create a text ByBug error, use fmt.Sprintf() if contains extra arguments.
+func Bug(text string, a ...interface{}) Error {
+	return NewBug(newError(text, a))
 }
 
-// Create a text ByRuntime error
-func Runtime(text string) Error {
-	return NewRuntime(syserr.New(text))
+// Create a text ByRuntime error, use fmt.Sprintf() if contains extra argumets.
+func Runtime(text string, a ...interface{}) Error {
+	return NewRuntime(newError(text, a))
 }
 
-// Create a text ByExternal error
-func External(text string) Error {
-	return NewExternal(syserr.New(text))
+// Create a text ByExternal error, use fmt.Sprintf() if contains extra arguments.
+func External(text string, a ...interface{}) Error {
+	return NewExternal(newError(text, a))
 }
 
-// Create a text ByInput error
-func Input(text string) Error {
-	return NewInput(syserr.New(text))
+// Create a text ByInput error, use fmt.Sprintf() if contains extra arguments.
+func Input(text string, a ...interface{}) Error {
+	return NewInput(newError(text, a))
+}
+
+// newError creates an error from text, use fmt.Sprintf() if contains extra arguments.
+func newError(text string, a []interface{}) error {
+	if len(a) != 0 {
+		return fmt.Errorf(text, a...)
+	}
+
+	return syserr.New(text)
 }
 
 // Get CausedBy from any error. If the error is Error interface, call its

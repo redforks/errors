@@ -54,18 +54,22 @@ var _ = bdd.Describe("errors", func() {
 
 	bdd.It("Bug", func() {
 		assertError(errors.Bug("foo"), "foo", errors.ByBug)
+		assertError(errors.Bug("foo %s", "bar"), "foo bar", errors.ByBug)
 	})
 
 	bdd.It("Runtime", func() {
 		assertError(errors.Runtime("foo"), "foo", errors.ByRuntime)
+		assertError(errors.Runtime("foo %s", "bar"), "foo bar", errors.ByRuntime)
 	})
 
 	bdd.It("External", func() {
 		assertError(errors.External("foo"), "foo", errors.ByExternal)
+		assertError(errors.External("foo %s", "bar"), "foo bar", errors.ByExternal)
 	})
 
 	bdd.It("Input", func() {
 		assertError(errors.Input("foo"), "foo", errors.ByInput)
+		assertError(errors.Input("foo %s", "bar"), "foo bar", errors.ByInput)
 	})
 
 	bdd.Context("GetCausedBy", func() {
