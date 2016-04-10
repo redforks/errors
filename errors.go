@@ -1,3 +1,5 @@
+//go:generate stringer -type=CausedBy
+
 // Enhanced errors package, add CausedBy information. Can replace standard
 // errors package.
 //
