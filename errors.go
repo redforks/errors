@@ -146,35 +146,46 @@ func NewInput(e error) Error {
 }
 
 // Create a text ByBug error, use fmt.Sprintf() if contains extra arguments.
-func Bug(text string, a ...interface{}) Error {
-	return NewBug(newError(text, a))
+func Bug(text string) Error {
+	return NewBug(syserr.New(text))
+}
+
+// Bugf printf version of Bug().
+func Bugf(text string, a ...interface{}) Error {
+	return Bug(fmt.Sprintf(text, a...))
 }
 
 // Create a text ByRuntime error, use fmt.Sprintf() if contains extra argumets.
-func Runtime(text string, a ...interface{}) Error {
-	return NewRuntime(newError(text, a))
+func Runtime(text string) Error {
+	return NewRuntime(syserr.New(text))
+}
+
+// Runtimef printf version of Runtime
+func Runtimef(text string, a ...interface{}) Error {
+	return Runtime(fmt.Sprintf(text, a...))
 }
 
 // Create a text ByExternal error, use fmt.Sprintf() if contains extra arguments.
-func External(text string, a ...interface{}) Error {
-	return NewExternal(newError(text, a))
+func External(text string) Error {
+	return NewExternal(syserr.New(text))
+}
+
+// Externalf printf version of External
+func Externalf(text string, a ...interface{}) Error {
+	return External(fmt.Sprintf(text, a...))
 }
 
 // Create a text ByInput error, use fmt.Sprintf() if contains extra arguments.
-func Input(text string, a ...interface{}) Error {
-	return NewInput(newError(text, a))
+func Input(text string) Error {
+	return NewInput(syserr.New(text))
 }
 
-// newError creates an error from text, use fmt.Sprintf() if contains extra arguments.
-func newError(text string, a []interface{}) error {
-	if len(a) != 0 {
-		return fmt.Errorf(text, a...)
-	}
-
-	return syserr.New(text)
+// Inputf printf version of Input.
+func Inputf(text string, a ...interface{}) Error {
+	return Input(fmt.Sprintf(text, a...))
 }
 
-// Get CausedBy from any error. If the error is Error interface, call its
+// GetCausedBy from any error. If the error is Error interface, call its
 // CausedBy() method. Then all considered as ByBug.
 //
 // If the error is not a bug, wrap it use NewXXX() function before return:
