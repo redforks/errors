@@ -3,11 +3,12 @@ package errors_test
 import (
 	"github.com/redforks/testing/reset"
 
+	. "github.com/onsi/gomega"
+
 	"golang.org/x/net/context"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/redforks/errors"
-	"github.com/stretchr/testify/assert"
 )
 
 var _ = Describe("handler", func() {
@@ -26,23 +27,23 @@ var _ = Describe("handler", func() {
 
 		errors.SetHandler(func(actx context.Context, err interface{}) {
 			called++
-			assert.Equal(t(), 3, err)
-			assert.Equal(t(), ctx, actx)
+			Ω(err).Should(Equal(3))
+			Ω(actx).Should(Equal(ctx))
 		})
 
 		errors.Handle(ctx, 3)
-		assert.Equal(t(), 1, called)
+		Ω(called).Should(Equal(1))
 	})
 
 	It("Context is nil", func() {
 		called := 0
 		errors.SetHandler(func(ctx context.Context, err interface{}) {
 			called++
-			assert.Equal(t(), context.Background(), ctx)
+			Ω(ctx).Should(Equal(context.Background()))
 		})
 
 		errors.Handle(nil, 2)
-		assert.Equal(t(), 1, called)
+		Ω(called).Should(Equal(1))
 	})
 
 })

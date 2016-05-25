@@ -5,12 +5,13 @@ import (
 	"os"
 	"spork/life"
 
+	. "github.com/onsi/gomega"
+
 	"golang.org/x/net/context"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/redforks/errors"
 	"github.com/redforks/hal"
-	"github.com/stretchr/testify/assert"
 )
 
 var _ = Describe("cmdline", func() {
@@ -48,25 +49,25 @@ var _ = Describe("cmdline", func() {
 			hit++
 			return nil
 		})
-		assert.Equal(t(), 1, hit)
-		assert.Empty(t(), exitCodes)
-		assert.Equal(t(), 0, onError)
+		Ω(hit).Should(Equal(1))
+		Ω(exitCodes).Should(BeEmpty())
+		Ω(onError).Should(Equal(0))
 	})
 
 	It("Exit", func() {
 		Go(func() error {
 			return NewExitError(1)
 		})
-		assert.Equal(t(), []int{1}, exitCodes)
-		assert.Equal(t(), 1, onAbort)
-		assert.Equal(t(), 0, onError)
+		Ω(exitCodes).Should(Equal([]int{1}))
+		Ω(onAbort).Should(Equal(1))
+		Ω(onError).Should(Equal(0))
 	})
 
 	It("Report error", func() {
 		Go(func() error {
 			return errors.New("foo")
 		})
-		assert.Equal(t(), 1, onError)
+		Ω(onError).Should(Equal(1))
 	})
 
 })

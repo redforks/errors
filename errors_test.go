@@ -3,17 +3,18 @@ package errors_test
 import (
 	syserr "errors"
 
+	. "github.com/onsi/gomega"
+
 	"github.com/redforks/errors"
 
 	. "github.com/onsi/ginkgo"
-	"github.com/stretchr/testify/assert"
 )
 
 var _ = Describe("errors", func() {
 
 	assertError := func(e errors.Error, msg string, causedBy errors.CausedBy) {
-		assert.Equal(t(), msg, e.Error())
-		assert.Equal(t(), causedBy, e.CausedBy())
+		Ω(e.Error()).Should(Equal(msg))
+		Ω(e.CausedBy()).Should(Equal(causedBy))
 	}
 
 	It("New", func() {
@@ -37,19 +38,19 @@ var _ = Describe("errors", func() {
 	})
 
 	It("NewBug - nil", func() {
-		assert.Nil(t(), errors.NewBug(nil))
+		Ω(errors.NewBug(nil)).Should(BeNil())
 	})
 
 	It("NewRuntime - nil", func() {
-		assert.Nil(t(), errors.NewRuntime(nil))
+		Ω(errors.NewRuntime(nil)).Should(BeNil())
 	})
 
 	It("NewInput - nil", func() {
-		assert.Nil(t(), errors.NewInput(nil))
+		Ω(errors.NewInput(nil)).Should(BeNil())
 	})
 
 	It("NewExternal - nil", func() {
-		assert.Nil(t(), errors.NewExternal(nil))
+		Ω(errors.NewExternal(nil)).Should(BeNil())
 	})
 
 	It("Bug", func() {
@@ -75,11 +76,11 @@ var _ = Describe("errors", func() {
 	Context("GetCausedBy", func() {
 
 		It("Default to ByBug", func() {
-			assert.Equal(t(), errors.ByBug, errors.GetCausedBy(syserr.New("foo")))
+			Ω(errors.GetCausedBy(syserr.New("foo"))).Should(Equal(errors.ByBug))
 		})
 
 		It("Error object", func() {
-			assert.Equal(t(), errors.ByExternal, errors.GetCausedBy(errors.External("foo")))
+			Ω(errors.GetCausedBy(errors.External("foo"))).Should(Equal(errors.ByExternal))
 		})
 
 	})
@@ -87,15 +88,15 @@ var _ = Describe("errors", func() {
 	Context("GetPanicCausedBy", func() {
 
 		It("nil", func() {
-			assert.Equal(t(), errors.NoError, errors.GetPanicCausedBy(nil))
+			Ω(errors.GetPanicCausedBy(nil)).Should(Equal(errors.NoError))
 		})
 
 		It("error", func() {
-			assert.Equal(t(), errors.ByInput, errors.GetPanicCausedBy(errors.Input("foo")))
+			Ω(errors.GetPanicCausedBy(errors.Input("foo"))).Should(Equal(errors.ByInput))
 		})
 
 		It("Other value", func() {
-			assert.Equal(t(), errors.ByBug, errors.GetPanicCausedBy(0))
+			Ω(errors.GetPanicCausedBy(0)).Should(Equal(errors.ByBug))
 		})
 
 	})

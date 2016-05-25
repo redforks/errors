@@ -2,12 +2,12 @@ package errors_test
 
 import (
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 
 	"testing"
 )
 
-var t = GinkgoT
-
 func TestErrors(t *testing.T) {
+	gomega.RegisterFailHandler(Fail)
 	RunSpecs(t, "Errors Suite")
 }
