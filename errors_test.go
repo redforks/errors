@@ -3,6 +3,8 @@ package errors_test
 import (
 	syserr "errors"
 
+	. "github.com/onsi/ginkgo/extensions/table"
+
 	. "github.com/onsi/gomega"
 
 	"github.com/redforks/errors"
@@ -58,6 +60,18 @@ var _ = Describe("errors", func() {
 			})
 
 		})
+
+		DescribeTable("Not wrap caused by error", func(wrapFunc func(error) errors.Error) {
+			e := errors.Bug("foo")
+			wrap := wrapFunc(e)
+			Ω(wrap).Should(BeIdenticalTo(e))
+		},
+			Entry("NewBug", errors.NewBug),
+			Entry("NewRuntime", errors.NewRuntime),
+			Entry("NewExternal", errors.NewExternal),
+			Entry("NewInput", errors.NewInput),
+		)
+
 	})
 
 	Context("From error text", func() {

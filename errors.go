@@ -106,10 +106,11 @@ func New(text string) Error {
 //
 //  return errors.NewBug(exitFunc())
 func NewBug(e error) Error {
-	if e == nil {
-		return nil
+	err, need := checkWrapped(e)
+	if need {
+		return byBug{e}
 	}
-	return byBug{e}
+	return err
 }
 
 // Create a ByRuntime error from exist error. If e is nil, return nil. It is
@@ -117,10 +118,11 @@ func NewBug(e error) Error {
 //
 //  return errors.NewRuntime(exitFunc())
 func NewRuntime(e error) Error {
-	if e == nil {
-		return nil
+	err, need := checkWrapped(e)
+	if need {
+		return byRuntime{e}
 	}
-	return byRuntime{e}
+	return err
 }
 
 // Create a ByExternal error from exist error. If e is nil, return nil. It is
@@ -128,10 +130,11 @@ func NewRuntime(e error) Error {
 //
 //  return errors.NewExternal(exitFunc())
 func NewExternal(e error) Error {
-	if e == nil {
-		return nil
+	err, need := checkWrapped(e)
+	if need {
+		return byExternal{e}
 	}
-	return byExternal{e}
+	return err
 }
 
 // Create a ByInput error from exist error. If e is nil, return nil. It is safe
@@ -139,10 +142,23 @@ func NewExternal(e error) Error {
 //
 //  return errors.NewInput(exitFunc())
 func NewInput(e error) Error {
-	if e == nil {
-		return nil
+	err, need := checkWrapped(e)
+	if need {
+		return byInput{e}
 	}
-	return byInput{e}
+	return err
+}
+
+// check error dose need wrap, if not need, NexXXX() funcs use err as return value,
+// if need wrap, needWrap returns true
+func checkWrapped(e error) (err Error, needWrap bool) {
+	if e == nil {
+		return nil, false
+	}
+
+	err, ok := e.(Error)
+	needWrap = !ok
+	return
 }
 
 // Create a text ByBug error, use fmt.Sprintf() if contains extra arguments.
