@@ -5,96 +5,96 @@ import (
 
 	"github.com/redforks/errors"
 
-	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
 	"github.com/stretchr/testify/assert"
 )
 
-var _ = bdd.Describe("errors", func() {
+var _ = Describe("errors", func() {
 
 	assertError := func(e errors.Error, msg string, causedBy errors.CausedBy) {
 		assert.Equal(t(), msg, e.Error())
 		assert.Equal(t(), causedBy, e.CausedBy())
 	}
 
-	bdd.It("New", func() {
+	It("New", func() {
 		assertError(errors.New("foo"), "foo", errors.ByBug)
 	})
 
-	bdd.It("NewBug", func() {
+	It("NewBug", func() {
 		assertError(errors.NewBug(syserr.New("foo")), "foo", errors.ByBug)
 	})
 
-	bdd.It("NewRuntime", func() {
+	It("NewRuntime", func() {
 		assertError(errors.NewRuntime(syserr.New("foo")), "foo", errors.ByRuntime)
 	})
 
-	bdd.It("NewExternal", func() {
+	It("NewExternal", func() {
 		assertError(errors.NewExternal(syserr.New("foo")), "foo", errors.ByExternal)
 	})
 
-	bdd.It("NewInput", func() {
+	It("NewInput", func() {
 		assertError(errors.NewInput(syserr.New("foo")), "foo", errors.ByInput)
 	})
 
-	bdd.It("NewBug - nil", func() {
+	It("NewBug - nil", func() {
 		assert.Nil(t(), errors.NewBug(nil))
 	})
 
-	bdd.It("NewRuntime - nil", func() {
+	It("NewRuntime - nil", func() {
 		assert.Nil(t(), errors.NewRuntime(nil))
 	})
 
-	bdd.It("NewInput - nil", func() {
+	It("NewInput - nil", func() {
 		assert.Nil(t(), errors.NewInput(nil))
 	})
 
-	bdd.It("NewExternal - nil", func() {
+	It("NewExternal - nil", func() {
 		assert.Nil(t(), errors.NewExternal(nil))
 	})
 
-	bdd.It("Bug", func() {
+	It("Bug", func() {
 		assertError(errors.Bug("foo"), "foo", errors.ByBug)
 		assertError(errors.Bugf("foo %s", "bar"), "foo bar", errors.ByBug)
 	})
 
-	bdd.It("Runtime", func() {
+	It("Runtime", func() {
 		assertError(errors.Runtime("foo"), "foo", errors.ByRuntime)
 		assertError(errors.Runtimef("foo %s", "bar"), "foo bar", errors.ByRuntime)
 	})
 
-	bdd.It("External", func() {
+	It("External", func() {
 		assertError(errors.External("foo"), "foo", errors.ByExternal)
 		assertError(errors.Externalf("foo %s", "bar"), "foo bar", errors.ByExternal)
 	})
 
-	bdd.It("Input", func() {
+	It("Input", func() {
 		assertError(errors.Input("foo"), "foo", errors.ByInput)
 		assertError(errors.Inputf("foo %s", "bar"), "foo bar", errors.ByInput)
 	})
 
-	bdd.Context("GetCausedBy", func() {
+	Context("GetCausedBy", func() {
 
-		bdd.It("Default to ByBug", func() {
+		It("Default to ByBug", func() {
 			assert.Equal(t(), errors.ByBug, errors.GetCausedBy(syserr.New("foo")))
 		})
 
-		bdd.It("Error object", func() {
+		It("Error object", func() {
 			assert.Equal(t(), errors.ByExternal, errors.GetCausedBy(errors.External("foo")))
 		})
 
 	})
 
-	bdd.Context("GetPanicCausedBy", func() {
+	Context("GetPanicCausedBy", func() {
 
-		bdd.It("nil", func() {
+		It("nil", func() {
 			assert.Equal(t(), errors.NoError, errors.GetPanicCausedBy(nil))
 		})
 
-		bdd.It("error", func() {
+		It("error", func() {
 			assert.Equal(t(), errors.ByInput, errors.GetPanicCausedBy(errors.Input("foo")))
 		})
 
-		bdd.It("Other value", func() {
+		It("Other value", func() {
 			assert.Equal(t(), errors.ByBug, errors.GetPanicCausedBy(0))
 		})
 

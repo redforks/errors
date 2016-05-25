@@ -5,22 +5,22 @@ import (
 
 	"golang.org/x/net/context"
 
-	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
 	"github.com/redforks/errors"
 	"github.com/stretchr/testify/assert"
 )
 
-var _ = bdd.Describe("handler", func() {
+var _ = Describe("handler", func() {
 
-	bdd.BeforeEach(func() {
+	BeforeEach(func() {
 		reset.Enable()
 	})
 
-	bdd.AfterEach(func() {
+	AfterEach(func() {
 		reset.Disable()
 	})
 
-	bdd.It("Context not nil", func() {
+	It("Context not nil", func() {
 		called := 0
 		ctx := context.WithValue(context.Background(), "foo", 1)
 
@@ -34,7 +34,7 @@ var _ = bdd.Describe("handler", func() {
 		assert.Equal(t(), 1, called)
 	})
 
-	bdd.It("Context is nil", func() {
+	It("Context is nil", func() {
 		called := 0
 		errors.SetHandler(func(ctx context.Context, err interface{}) {
 			called++

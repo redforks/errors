@@ -7,19 +7,19 @@ import (
 
 	"golang.org/x/net/context"
 
-	bdd "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
 	"github.com/redforks/errors"
 	"github.com/redforks/hal"
 	"github.com/stretchr/testify/assert"
 )
 
-var _ = bdd.Describe("cmdline", func() {
+var _ = Describe("cmdline", func() {
 	var (
 		exitCodes        []int
 		onAbort, onError int
 	)
 
-	bdd.BeforeEach(func() {
+	BeforeEach(func() {
 		exitCodes = nil
 		hal.Exit = func(n int) {
 			exitCodes = append(exitCodes, n)
@@ -36,13 +36,13 @@ var _ = bdd.Describe("cmdline", func() {
 		})
 	})
 
-	bdd.AfterEach(func() {
+	AfterEach(func() {
 		reset.Disable()
 		hal.Exit = os.Exit
 		errors.SetHandler(nil)
 	})
 
-	bdd.It("Without error", func() {
+	It("Without error", func() {
 		hit := 0
 		Go(func() error {
 			hit++
@@ -53,7 +53,7 @@ var _ = bdd.Describe("cmdline", func() {
 		assert.Equal(t(), 0, onError)
 	})
 
-	bdd.It("Exit", func() {
+	It("Exit", func() {
 		Go(func() error {
 			return NewExitError(1)
 		})
@@ -62,7 +62,7 @@ var _ = bdd.Describe("cmdline", func() {
 		assert.Equal(t(), 0, onError)
 	})
 
-	bdd.It("Report error", func() {
+	It("Report error", func() {
 		Go(func() error {
 			return errors.New("foo")
 		})
