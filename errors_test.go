@@ -17,60 +17,71 @@ var _ = Describe("errors", func() {
 		Ω(e.CausedBy()).Should(Equal(causedBy))
 	}
 
-	It("New", func() {
-		assertError(errors.New("foo"), "foo", errors.ByBug)
+	Context("Wrap error", func() {
+
+		It("New", func() {
+			assertError(errors.New("foo"), "foo", errors.ByBug)
+		})
+
+		It("NewBug", func() {
+			assertError(errors.NewBug(syserr.New("foo")), "foo", errors.ByBug)
+		})
+
+		It("NewRuntime", func() {
+			assertError(errors.NewRuntime(syserr.New("foo")), "foo", errors.ByRuntime)
+		})
+
+		It("NewExternal", func() {
+			assertError(errors.NewExternal(syserr.New("foo")), "foo", errors.ByExternal)
+		})
+
+		It("NewInput", func() {
+			assertError(errors.NewInput(syserr.New("foo")), "foo", errors.ByInput)
+		})
+
+		Context("Not wrap nil", func() {
+
+			It("NewBug", func() {
+				Ω(errors.NewBug(nil)).Should(BeNil())
+			})
+
+			It("NewRuntime", func() {
+				Ω(errors.NewRuntime(nil)).Should(BeNil())
+			})
+
+			It("NewInput", func() {
+				Ω(errors.NewInput(nil)).Should(BeNil())
+			})
+
+			It("NewExternal", func() {
+				Ω(errors.NewExternal(nil)).Should(BeNil())
+			})
+
+		})
 	})
 
-	It("NewBug", func() {
-		assertError(errors.NewBug(syserr.New("foo")), "foo", errors.ByBug)
-	})
+	Context("From error text", func() {
 
-	It("NewRuntime", func() {
-		assertError(errors.NewRuntime(syserr.New("foo")), "foo", errors.ByRuntime)
-	})
+		It("Bug", func() {
+			assertError(errors.Bug("foo"), "foo", errors.ByBug)
+			assertError(errors.Bugf("foo %s", "bar"), "foo bar", errors.ByBug)
+		})
 
-	It("NewExternal", func() {
-		assertError(errors.NewExternal(syserr.New("foo")), "foo", errors.ByExternal)
-	})
+		It("Runtime", func() {
+			assertError(errors.Runtime("foo"), "foo", errors.ByRuntime)
+			assertError(errors.Runtimef("foo %s", "bar"), "foo bar", errors.ByRuntime)
+		})
 
-	It("NewInput", func() {
-		assertError(errors.NewInput(syserr.New("foo")), "foo", errors.ByInput)
-	})
+		It("External", func() {
+			assertError(errors.External("foo"), "foo", errors.ByExternal)
+			assertError(errors.Externalf("foo %s", "bar"), "foo bar", errors.ByExternal)
+		})
 
-	It("NewBug - nil", func() {
-		Ω(errors.NewBug(nil)).Should(BeNil())
-	})
+		It("Input", func() {
+			assertError(errors.Input("foo"), "foo", errors.ByInput)
+			assertError(errors.Inputf("foo %s", "bar"), "foo bar", errors.ByInput)
+		})
 
-	It("NewRuntime - nil", func() {
-		Ω(errors.NewRuntime(nil)).Should(BeNil())
-	})
-
-	It("NewInput - nil", func() {
-		Ω(errors.NewInput(nil)).Should(BeNil())
-	})
-
-	It("NewExternal - nil", func() {
-		Ω(errors.NewExternal(nil)).Should(BeNil())
-	})
-
-	It("Bug", func() {
-		assertError(errors.Bug("foo"), "foo", errors.ByBug)
-		assertError(errors.Bugf("foo %s", "bar"), "foo bar", errors.ByBug)
-	})
-
-	It("Runtime", func() {
-		assertError(errors.Runtime("foo"), "foo", errors.ByRuntime)
-		assertError(errors.Runtimef("foo %s", "bar"), "foo bar", errors.ByRuntime)
-	})
-
-	It("External", func() {
-		assertError(errors.External("foo"), "foo", errors.ByExternal)
-		assertError(errors.Externalf("foo %s", "bar"), "foo bar", errors.ByExternal)
-	})
-
-	It("Input", func() {
-		assertError(errors.Input("foo"), "foo", errors.ByInput)
-		assertError(errors.Inputf("foo %s", "bar"), "foo bar", errors.ByInput)
 	})
 
 	Context("GetCausedBy", func() {
