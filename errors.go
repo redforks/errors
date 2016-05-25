@@ -163,7 +163,7 @@ func checkWrapped(e error) (err Error, needWrap bool) {
 
 // Create a text ByBug error, use fmt.Sprintf() if contains extra arguments.
 func Bug(text string) Error {
-	return NewBug(syserr.New(text))
+	return byBug{syserr.New(text)}
 }
 
 // Bugf printf version of Bug().
@@ -173,7 +173,7 @@ func Bugf(text string, a ...interface{}) Error {
 
 // Create a text ByRuntime error, use fmt.Sprintf() if contains extra argumets.
 func Runtime(text string) Error {
-	return NewRuntime(syserr.New(text))
+	return byRuntime{syserr.New(text)}
 }
 
 // Runtimef printf version of Runtime
@@ -183,7 +183,7 @@ func Runtimef(text string, a ...interface{}) Error {
 
 // Create a text ByExternal error, use fmt.Sprintf() if contains extra arguments.
 func External(text string) Error {
-	return NewExternal(syserr.New(text))
+	return byExternal{syserr.New(text)}
 }
 
 // Externalf printf version of External
@@ -193,7 +193,7 @@ func Externalf(text string, a ...interface{}) Error {
 
 // Create a text ByInput error, use fmt.Sprintf() if contains extra arguments.
 func Input(text string) Error {
-	return NewInput(syserr.New(text))
+	return byInput{syserr.New(text)}
 }
 
 // Inputf printf version of Input.
