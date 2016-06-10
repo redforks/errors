@@ -1,9 +1,9 @@
 package cmdline
 
 import (
+	"github.com/redforks/testing/reset"
 	"os"
 	"spork/life"
-	"spork/testing/reset"
 
 	"golang.org/x/net/context"
 

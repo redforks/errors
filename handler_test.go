@@ -1,7 +1,7 @@
 package errors_test
 
 import (
-	"spork/testing/reset"
+	"github.com/redforks/testing/reset"
 
 	"golang.org/x/net/context"
 
