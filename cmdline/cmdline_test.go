@@ -1,9 +1,10 @@
 package cmdline
 
 import (
-	"github.com/redforks/testing/reset"
 	"os"
 	"spork/life"
+
+	"github.com/redforks/testing/reset"
 
 	. "github.com/onsi/gomega"
 
