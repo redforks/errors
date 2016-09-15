@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 var (
