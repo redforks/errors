@@ -1,8 +1,8 @@
 package cmdline
 
 import (
+	"github.com/redforks/life"
 	"os"
-	"spork/life"
 
 	"github.com/redforks/testing/reset"
 

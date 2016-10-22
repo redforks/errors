@@ -8,9 +8,9 @@ package cmdline
 
 import (
 	"fmt"
+	"github.com/redforks/life"
 	"os"
 	"runtime"
-	"spork/life"
 
 	"github.com/redforks/errors"
 )
