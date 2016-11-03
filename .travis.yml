@@ -12,5 +12,5 @@ install:
 
 script: 
   - $GOPATH/bin/ginkgo -r --randomizeAllSpecs --randomizeSuites --race --trace
-  - $GOPATH/bin/gometalinter.v1 --deadline=60s --enable=unused,misspell
+  - $GOPATH/bin/gometalinter.v1 --deadline=60s --enable=unused,misspell --exclude=causedby_string.go
 
