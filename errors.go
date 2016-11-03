@@ -1,7 +1,7 @@
 //go:generate stringer -type=CausedBy
 
-// Enhanced errors package, add CausedBy information. Can replace standard
-// errors package.
+// Package errors Enhanced errors package, add CausedBy information. Can
+// replace standard errors package.
 //
 // Error classified by who caused the error:
 //
@@ -20,49 +20,50 @@ import (
 	"fmt"
 )
 
-// Describe who caused this error.
+// CausedBy describe who caused this error.
 type CausedBy int
 
-// Extended error interface that describe error source (CausedBy)
+// Error is a special error interface contains CausedBy information.
 type Error interface {
 	error
 
+	// CausedBy returns the source of error.
 	CausedBy() CausedBy
 }
 
 const (
-	// Error caused by a bug. This kind of error normally logged and/or report to
-	// error report service, notify to developer. Did not show detail error to
-	// end-user, it is not their fault, do not blame them, and apologize for this
-	// internal error.
+	// ByBug error caused by a bug. This kind of error normally logged and/or
+	// report to error report service, notify to developer. Did not show detail
+	// error to end-user, it is not their fault, do not blame them, and apologize
+	// for this internal error.
 	ByBug CausedBy = iota
 
-	// Error caused by golang runtime, such as run out of memory, file read/write
-	// error. Any error caused by OS, or hardware. Network interface error is
-	// caused by Runtime, error caused by network cable is not. Report this kind
-	// of error to health monitor service, notify maintains team as fast as
-	// possible. It not need to report to error service.
+	// ByRuntime error caused by golang runtime, such as run out of memory, file
+	// read/write error. Any error caused by OS, or hardware. Network interface
+	// error is caused by Runtime, error caused by network cable is not. Report
+	// this kind of error to health monitor service, notify maintains team as
+	// fast as possible. It not need to report to error service.
 	ByRuntime
 
-	// Error caused by depended external service, such as a Database or other app
-	// services. Or network environment, such as lost network connection. This
-	// kind of error is can not fixed by patching code, patching OS, upgrade or
-	// replace hardware, they are not our error, nothing we can do.
-	// Report to health monitor service, notify maintains team to contact people
-	// who can fix this.
+	// ByExternal error caused by depended external service, such as a Database
+	// or other app services. Or network environment, such as lost network
+	// connection. This kind of error is can not fixed by patching code, patching
+	// OS, upgrade or replace hardware, they are not our error, nothing we can
+	// do.  Report to health monitor service, notify maintains team to contact
+	// people who can fix this.
 	// Give end-user a brief message that who caused this error that they can
 	// understand, such as payment service, and user know this error is not
 	// caused by us.
 	ByExternal
 
-	// Error caused by bad input. A program always dealing with input, such as
-	// user input, or a request for a service daemon. When the input is not
-	// expected, return error with detail and precise reason. Of course, do not
-	// need report to error report service or health monitor service.
+	// ByInput error caused by bad input. A program always dealing with input,
+	// such as user input, or a request for a service daemon. When the input is
+	// not expected, return error with detail and precise reason. Of course, do
+	// not need report to error report service or health monitor service.
 	ByInput
 
-	// A special value returned by GetPanicCausedBy() to indicate no error
-	// happened
+	// NoError is a special value returned by GetPanicCausedBy() to indicate no
+	// error happened
 	NoError
 )
 
@@ -94,17 +95,15 @@ func (byInput) CausedBy() CausedBy {
 	return ByInput
 }
 
-// Replacement of standard errors.New(), create a ByBug error.
+// New function replace of standard errors.New(), create a ByBug error.
 func New(text string) Error {
 	return byBug{
 		syserr.New(text),
 	}
 }
 
-// Create a ByBug error from exist error. If e is nil, return nil. It is safe
-// to write:
-//
-//  return errors.NewBug(exitFunc())
+// NewBug wrap an exist error to ByBug. If e is nil, return nil. If e is
+// already an Error, abort the wrap.
 func NewBug(e error) Error {
 	err, need := checkWrapped(e)
 	if need {
@@ -113,10 +112,8 @@ func NewBug(e error) Error {
 	return err
 }
 
-// Create a ByRuntime error from exist error. If e is nil, return nil. It is
-// safe to write:
-//
-//  return errors.NewRuntime(exitFunc())
+// NewRuntime wrap an exist error to ByRuntime. If e is nil, return nil. If e is
+// already an Error, abort the wrap.
 func NewRuntime(e error) Error {
 	err, need := checkWrapped(e)
 	if need {
@@ -125,10 +122,8 @@ func NewRuntime(e error) Error {
 	return err
 }
 
-// Create a ByExternal error from exist error. If e is nil, return nil. It is
-// safe to write:
-//
-//  return errors.NewExternal(exitFunc())
+// NewExternal wrap an exist error to ByRuntime. If e is nil, return nil. If e is
+// already an Error, abort the wrap.
 func NewExternal(e error) Error {
 	err, need := checkWrapped(e)
 	if need {
@@ -137,10 +132,8 @@ func NewExternal(e error) Error {
 	return err
 }
 
-// Create a ByInput error from exist error. If e is nil, return nil. It is safe
-// to write:
-//
-//  return errors.NewInput(exitFunc())
+// NewInput wrap an exist error to ByRuntime. If e is nil, return nil. If e is
+// already an Error, abort the wrap.
 func NewInput(e error) Error {
 	err, need := checkWrapped(e)
 	if need {
@@ -161,42 +154,42 @@ func checkWrapped(e error) (err Error, needWrap bool) {
 	return
 }
 
-// Create a text ByBug error, use fmt.Sprintf() if contains extra arguments.
+// Bug creates an Error from string.
 func Bug(text string) Error {
 	return byBug{syserr.New(text)}
 }
 
-// Bugf printf version of Bug().
+// Bugf sprintf version of Bug().
 func Bugf(text string, a ...interface{}) Error {
 	return Bug(fmt.Sprintf(text, a...))
 }
 
-// Create a text ByRuntime error, use fmt.Sprintf() if contains extra argumets.
+// Runtime creates an Error from string.
 func Runtime(text string) Error {
 	return byRuntime{syserr.New(text)}
 }
 
-// Runtimef printf version of Runtime
+// Runtimef sprintf version of Runtime().
 func Runtimef(text string, a ...interface{}) Error {
 	return Runtime(fmt.Sprintf(text, a...))
 }
 
-// Create a text ByExternal error, use fmt.Sprintf() if contains extra arguments.
+// External creates an Error from string.
 func External(text string) Error {
 	return byExternal{syserr.New(text)}
 }
 
-// Externalf printf version of External
+// Externalf sprintf version of Runtime().
 func Externalf(text string, a ...interface{}) Error {
 	return External(fmt.Sprintf(text, a...))
 }
 
-// Create a text ByInput error, use fmt.Sprintf() if contains extra arguments.
+// Input creates an Error from string.
 func Input(text string) Error {
 	return byInput{syserr.New(text)}
 }
 
-// Inputf printf version of Input.
+// Inputf sprintf version of Input.
 func Inputf(text string, a ...interface{}) Error {
 	return Input(fmt.Sprintf(text, a...))
 }
@@ -217,9 +210,9 @@ func GetCausedBy(e error) CausedBy {
 	return ByBug
 }
 
-// Resolve caused for recover() return value, if the value is nil, return
-// NoError. For error value use GetCausedBy() to resolve, other value return
-// ByBug.
+// GetPanicCausedBy resolve caused for recover() return value, if the value is
+// nil, return NoError. For error value use GetCausedBy() to resolve, other
+// value return ByBug.
 func GetPanicCausedBy(v interface{}) CausedBy {
 	if v == nil {
 		return NoError
