@@ -204,23 +204,26 @@ func Inputf(text string, a ...interface{}) Error {
 //  }
 //
 func GetCausedBy(e error) CausedBy {
-	if err, ok := e.(Error); ok {
+	switch err := e.(type) {
+	case nil:
+		return NoError
+	case Error:
 		return err.CausedBy()
+	default:
+		return ByBug
 	}
-	return ByBug
 }
 
 // GetPanicCausedBy resolve caused for recover() return value, if the value is
 // nil, return NoError. For error value use GetCausedBy() to resolve, other
 // value return ByBug.
 func GetPanicCausedBy(v interface{}) CausedBy {
-	if v == nil {
+	switch err := v.(type) {
+	case nil:
 		return NoError
+	case Error:
+		return err.CausedBy()
+	default:
+		return ByBug
 	}
-
-	if val, ok := v.(error); ok {
-		return GetCausedBy(val)
-	}
-
-	return ByBug
 }

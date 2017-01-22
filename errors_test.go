@@ -108,6 +108,11 @@ var _ = Describe("errors", func() {
 			Ω(errors.GetCausedBy(errors.External("foo"))).Should(Equal(errors.ByExternal))
 		})
 
+		It("nil is NoError", func() {
+			Ω(errors.GetCausedBy(nil)).Should(Equal(errors.NoError))
+
+		})
+
 	})
 
 	Context("GetPanicCausedBy", func() {
