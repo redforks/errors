@@ -105,7 +105,7 @@ func New(text string) Error {
 // NewBug wrap an exist error to ByBug. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
 func NewBug(e error) Error {
-	err, need := checkWrapped(e)
+	err, need := checkWrapped(e, ByBug)
 	if need {
 		return byBug{e}
 	}
@@ -115,7 +115,7 @@ func NewBug(e error) Error {
 // NewRuntime wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
 func NewRuntime(e error) Error {
-	err, need := checkWrapped(e)
+	err, need := checkWrapped(e, ByRuntime)
 	if need {
 		return byRuntime{e}
 	}
@@ -125,7 +125,7 @@ func NewRuntime(e error) Error {
 // NewExternal wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
 func NewExternal(e error) Error {
-	err, need := checkWrapped(e)
+	err, need := checkWrapped(e, ByExternal)
 	if need {
 		return byExternal{e}
 	}
@@ -135,7 +135,7 @@ func NewExternal(e error) Error {
 // NewInput wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
 func NewInput(e error) Error {
-	err, need := checkWrapped(e)
+	err, need := checkWrapped(e, ByInput)
 	if need {
 		return byInput{e}
 	}
@@ -144,14 +144,17 @@ func NewInput(e error) Error {
 
 // check error dose need wrap, if not need, NexXXX() funcs use err as return value,
 // if need wrap, needWrap returns true
-func checkWrapped(e error) (err Error, needWrap bool) {
+func checkWrapped(e error, exp CausedBy) (err Error, needWrap bool) {
 	if e == nil {
 		return nil, false
 	}
 
 	err, ok := e.(Error)
-	needWrap = !ok
-	return
+	if !ok {
+		return nil, true
+	}
+
+	return err, err.CausedBy() != exp
 }
 
 // Bug creates an Error from string.
@@ -192,6 +195,46 @@ func Input(text string) Error {
 // Inputf sprintf version of Input.
 func Inputf(text string, a ...interface{}) Error {
 	return Input(fmt.Sprintf(text, a...))
+}
+
+// Caused create error causedBy set by argument
+func Caused(causedBy CausedBy, text string) Error {
+	switch causedBy {
+	case ByBug:
+		return Bug(text)
+	case ByInput:
+		return Input(text)
+	case ByExternal:
+		return External(text)
+	case ByRuntime:
+		return Runtime(text)
+	default:
+		panic("Unknown causedBy")
+	}
+}
+
+// Causedf sprintf version of Caused
+func Causedf(causedBy CausedBy, text string, a ...interface{}) Error {
+	return Caused(causedBy, fmt.Sprintf(text, a...))
+}
+
+// NewCaused wraps an exist error to specified causedBy Error,
+// If e is nil, return nil.
+// If already an Error, returned directly if causedBy matches, re-wrap
+// with specific causedBy if not matched.
+func NewCaused(causedBy CausedBy, err error) Error {
+	switch causedBy {
+	case ByBug:
+		return NewBug(err)
+	case ByInput:
+		return NewInput(err)
+	case ByExternal:
+		return NewExternal(err)
+	case ByRuntime:
+		return NewRuntime(err)
+	default:
+		panic("Unknown causedBy")
+	}
 }
 
 // GetCausedBy from any error. If the error is Error interface, call its

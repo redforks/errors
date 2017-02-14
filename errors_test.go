@@ -62,7 +62,7 @@ var _ = Describe("errors", func() {
 		})
 
 		DescribeTable("Not wrap caused by error", func(wrapFunc func(error) errors.Error) {
-			e := errors.Bug("foo")
+			e := wrapFunc(syserr.New("foo"))
 			wrap := wrapFunc(e)
 			Ω(wrap).Should(BeIdenticalTo(e))
 		},
@@ -70,6 +70,22 @@ var _ = Describe("errors", func() {
 			Entry("NewRuntime", errors.NewRuntime),
 			Entry("NewExternal", errors.NewExternal),
 			Entry("NewInput", errors.NewInput),
+		)
+
+		DescribeTable("Rewrap", func(cause errors.CausedBy) {
+			alter := errors.ByRuntime
+			if cause == errors.ByRuntime {
+				alter = errors.ByBug
+			}
+			e := errors.Caused(alter, "foo")
+			e = errors.NewCaused(cause, e)
+			Ω(e).Should(MatchError("foo"))
+			Ω(e.CausedBy()).Should(Equal(cause))
+		},
+			Entry("ByBug", errors.ByBug),
+			Entry("ByRuntime", errors.ByRuntime),
+			Entry("ByExternal", errors.ByExternal),
+			Entry("ByInput", errors.ByInput),
 		)
 
 	})
@@ -129,5 +145,39 @@ var _ = Describe("errors", func() {
 			Ω(errors.GetPanicCausedBy(0)).Should(Equal(errors.ByBug))
 		})
 
+	})
+
+	Context("Caused", func() {
+		It("ByInput", func() {
+			Ω(errors.Caused(errors.ByInput, "foo")).Should(Equal(errors.Input("foo")))
+		})
+
+		It("ByBug", func() {
+			Ω(errors.Caused(errors.ByBug, "foo")).Should(Equal(errors.Bug("foo")))
+		})
+
+		It("ByRuntime", func() {
+			Ω(errors.Caused(errors.ByRuntime, "foo")).Should(Equal(errors.Runtime("foo")))
+		})
+
+		It("ByExternal", func() {
+			Ω(errors.Caused(errors.ByExternal, "foo")).Should(Equal(errors.External("foo")))
+		})
+	})
+
+	It("Causedf", func() {
+		Ω(errors.Causedf(errors.ByInput, "foo %d", 3)).Should(Equal(errors.Input("foo 3")))
+	})
+
+	Context("NewCaused", func() {
+		It("Normal error", func() {
+			e := syserr.New("foo")
+
+			Ω(errors.NewCaused(errors.ByBug, e)).Should(Equal(errors.NewBug(e)))
+			Ω(errors.NewCaused(errors.ByRuntime, e)).Should(Equal(errors.NewRuntime(e)))
+			Ω(errors.NewCaused(errors.ByExternal, e)).Should(Equal(errors.NewExternal(e)))
+			Ω(errors.NewCaused(errors.ByInput, e)).Should(Equal(errors.NewInput(e)))
+
+		})
 	})
 })
