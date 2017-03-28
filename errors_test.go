@@ -14,9 +14,9 @@ import (
 
 var _ = Describe("errors", func() {
 
-	assertError := func(e errors.Error, msg string, causedBy errors.CausedBy) {
+	assertError := func(e *errors.Error, msg string, causedBy errors.CausedBy) {
 		Ω(e.Error()).Should(Equal(msg))
-		Ω(e.CausedBy()).Should(Equal(causedBy))
+		Ω(e.CausedBy).Should(Equal(causedBy))
 	}
 
 	Context("Wrap error", func() {
@@ -61,17 +61,6 @@ var _ = Describe("errors", func() {
 
 		})
 
-		DescribeTable("Not wrap caused by error", func(wrapFunc func(error) errors.Error) {
-			e := wrapFunc(syserr.New("foo"))
-			wrap := wrapFunc(e)
-			Ω(wrap).Should(BeIdenticalTo(e))
-		},
-			Entry("NewBug", errors.NewBug),
-			Entry("NewRuntime", errors.NewRuntime),
-			Entry("NewExternal", errors.NewExternal),
-			Entry("NewInput", errors.NewInput),
-		)
-
 		DescribeTable("Rewrap", func(cause errors.CausedBy) {
 			alter := errors.ByRuntime
 			if cause == errors.ByRuntime {
@@ -80,7 +69,7 @@ var _ = Describe("errors", func() {
 			e := errors.Caused(alter, "foo")
 			e = errors.NewCaused(cause, e)
 			Ω(e).Should(MatchError("foo"))
-			Ω(e.CausedBy()).Should(Equal(cause))
+			Ω(e.CausedBy).Should(Equal(cause))
 		},
 			Entry("ByBug", errors.ByBug),
 			Entry("ByRuntime", errors.ByRuntime),
@@ -147,37 +136,30 @@ var _ = Describe("errors", func() {
 
 	})
 
-	Context("Caused", func() {
-		It("ByInput", func() {
-			Ω(errors.Caused(errors.ByInput, "foo")).Should(Equal(errors.Input("foo")))
-		})
-
-		It("ByBug", func() {
-			Ω(errors.Caused(errors.ByBug, "foo")).Should(Equal(errors.Bug("foo")))
-		})
-
-		It("ByRuntime", func() {
-			Ω(errors.Caused(errors.ByRuntime, "foo")).Should(Equal(errors.Runtime("foo")))
-		})
-
-		It("ByExternal", func() {
-			Ω(errors.Caused(errors.ByExternal, "foo")).Should(Equal(errors.External("foo")))
-		})
-	})
+	DescribeTable("Caused", func(causedBy errors.CausedBy) {
+		Ω(errors.Caused(causedBy, "foo").CausedBy).Should(Equal(causedBy))
+	},
+		Entry("ByInput", errors.ByInput),
+		Entry("ByBug", errors.ByBug),
+		Entry("ByExternal", errors.ByExternal),
+		Entry("ByRuntime", errors.ByRuntime),
+	)
 
 	It("Causedf", func() {
-		Ω(errors.Causedf(errors.ByInput, "foo %d", 3)).Should(Equal(errors.Input("foo 3")))
+		e := errors.Causedf(errors.ByInput, "foo %d", 3)
+		Ω(e.CausedBy).Should(Equal(errors.ByInput))
+		Ω(e.Error()).Should(HavePrefix("foo 3"))
 	})
 
-	Context("NewCaused", func() {
-		It("Normal error", func() {
-			e := syserr.New("foo")
-
-			Ω(errors.NewCaused(errors.ByBug, e)).Should(Equal(errors.NewBug(e)))
-			Ω(errors.NewCaused(errors.ByRuntime, e)).Should(Equal(errors.NewRuntime(e)))
-			Ω(errors.NewCaused(errors.ByExternal, e)).Should(Equal(errors.NewExternal(e)))
-			Ω(errors.NewCaused(errors.ByInput, e)).Should(Equal(errors.NewInput(e)))
-
-		})
-	})
+	DescribeTable("NewCaused", func(causedBy errors.CausedBy) {
+		e := syserr.New("foo")
+		er := errors.NewCaused(causedBy, e)
+		Ω(er.CausedBy).Should(Equal(causedBy))
+		Ω(er.Error()).Should(HavePrefix("foo"))
+	},
+		Entry("ByInput", errors.ByInput),
+		Entry("ByBug", errors.ByBug),
+		Entry("ByExternal", errors.ByExternal),
+		Entry("ByRuntime", errors.ByRuntime),
+	)
 })

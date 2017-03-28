@@ -18,18 +18,11 @@ package errors
 import (
 	syserr "errors"
 	"fmt"
+	"runtime"
 )
 
 // CausedBy describe who caused this error.
 type CausedBy int
-
-// Error is a special error interface contains CausedBy information.
-type Error interface {
-	error
-
-	// CausedBy returns the source of error.
-	CausedBy() CausedBy
-}
 
 const (
 	// ByBug error caused by a bug. This kind of error normally logged and/or
@@ -67,138 +60,123 @@ const (
 	NoError
 )
 
-type errorWrap struct {
-	error
+// Error contains error, causedBy, and stack.
+type Error struct {
+	Err error
+
+	stack  []uintptr
+	frames []StackFrame
+
+	CausedBy CausedBy
 }
 
-type byBug errorWrap
-
-func (byBug) CausedBy() CausedBy {
-	return ByBug
+func (e *Error) Error() string {
+	return e.Err.Error()
 }
 
-type byRuntime errorWrap
+// StackFrames returns an array of frames containing information about the
+// stack.
+func (err *Error) StackFrames() []StackFrame {
+	if err.frames == nil {
+		err.frames = make([]StackFrame, len(err.stack))
 
-func (byRuntime) CausedBy() CausedBy {
-	return ByRuntime
+		for i, pc := range err.stack {
+			err.frames[i] = NewStackFrame(pc)
+		}
+	}
+
+	return err.frames
 }
 
-type byExternal errorWrap
-
-func (byExternal) CausedBy() CausedBy {
-	return ByExternal
-}
-
-type byInput errorWrap
-
-func (byInput) CausedBy() CausedBy {
-	return ByInput
-}
+const MaxStackDepth = 50
 
 // New function replace of standard errors.New(), create a ByBug error.
-func New(text string) Error {
-	return byBug{
-		syserr.New(text),
+func New(text string) *Error {
+	return NewBug(syserr.New(text))
+}
+
+func wrap(e error, causedBy CausedBy) *Error {
+	if e == nil {
+		return nil
+	}
+
+	stack := make([]uintptr, MaxStackDepth)
+	length := runtime.Callers(2, stack[:])
+	stack = stack[:length]
+	return &Error{
+		Err:   e,
+		stack: stack,
+
+		CausedBy: causedBy,
 	}
 }
 
 // NewBug wrap an exist error to ByBug. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
-func NewBug(e error) Error {
-	err, need := checkWrapped(e, ByBug)
-	if need {
-		return byBug{e}
-	}
-	return err
+func NewBug(e error) *Error {
+	return wrap(e, ByBug)
 }
 
 // NewRuntime wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
-func NewRuntime(e error) Error {
-	err, need := checkWrapped(e, ByRuntime)
-	if need {
-		return byRuntime{e}
-	}
-	return err
+func NewRuntime(e error) *Error {
+	return wrap(e, ByRuntime)
 }
 
 // NewExternal wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
-func NewExternal(e error) Error {
-	err, need := checkWrapped(e, ByExternal)
-	if need {
-		return byExternal{e}
-	}
-	return err
+func NewExternal(e error) *Error {
+	return wrap(e, ByExternal)
 }
 
 // NewInput wrap an exist error to ByRuntime. If e is nil, return nil. If e is
 // already an Error, abort the wrap.
-func NewInput(e error) Error {
-	err, need := checkWrapped(e, ByInput)
-	if need {
-		return byInput{e}
-	}
-	return err
-}
-
-// check error dose need wrap, if not need, NexXXX() funcs use err as return value,
-// if need wrap, needWrap returns true
-func checkWrapped(e error, exp CausedBy) (err Error, needWrap bool) {
-	if e == nil {
-		return nil, false
-	}
-
-	err, ok := e.(Error)
-	if !ok {
-		return nil, true
-	}
-
-	return err, err.CausedBy() != exp
+func NewInput(e error) *Error {
+	return wrap(e, ByInput)
 }
 
 // Bug creates an Error from string.
-func Bug(text string) Error {
-	return byBug{syserr.New(text)}
+func Bug(text string) *Error {
+	return NewBug(syserr.New(text))
 }
 
 // Bugf sprintf version of Bug().
-func Bugf(text string, a ...interface{}) Error {
+func Bugf(text string, a ...interface{}) *Error {
 	return Bug(fmt.Sprintf(text, a...))
 }
 
 // Runtime creates an Error from string.
-func Runtime(text string) Error {
-	return byRuntime{syserr.New(text)}
+func Runtime(text string) *Error {
+	return NewRuntime(syserr.New(text))
 }
 
 // Runtimef sprintf version of Runtime().
-func Runtimef(text string, a ...interface{}) Error {
+func Runtimef(text string, a ...interface{}) *Error {
 	return Runtime(fmt.Sprintf(text, a...))
 }
 
 // External creates an Error from string.
-func External(text string) Error {
-	return byExternal{syserr.New(text)}
+func External(text string) *Error {
+	return NewExternal(syserr.New(text))
 }
 
 // Externalf sprintf version of Runtime().
-func Externalf(text string, a ...interface{}) Error {
+func Externalf(text string, a ...interface{}) *Error {
 	return External(fmt.Sprintf(text, a...))
 }
 
 // Input creates an Error from string.
-func Input(text string) Error {
-	return byInput{syserr.New(text)}
+func Input(text string) *Error {
+	return NewInput(syserr.New(text))
 }
 
 // Inputf sprintf version of Input.
-func Inputf(text string, a ...interface{}) Error {
+func Inputf(text string, a ...interface{}) *Error {
 	return Input(fmt.Sprintf(text, a...))
 }
 
 // Caused create error causedBy set by argument
-func Caused(causedBy CausedBy, text string) Error {
+func Caused(causedBy CausedBy, text string) *Error {
 	switch causedBy {
 	case ByBug:
 		return Bug(text)
@@ -214,7 +192,7 @@ func Caused(causedBy CausedBy, text string) Error {
 }
 
 // Causedf sprintf version of Caused
-func Causedf(causedBy CausedBy, text string, a ...interface{}) Error {
+func Causedf(causedBy CausedBy, text string, a ...interface{}) *Error {
 	return Caused(causedBy, fmt.Sprintf(text, a...))
 }
 
@@ -222,7 +200,7 @@ func Causedf(causedBy CausedBy, text string, a ...interface{}) Error {
 // If e is nil, return nil.
 // If already an Error, returned directly if causedBy matches, re-wrap
 // with specific causedBy if not matched.
-func NewCaused(causedBy CausedBy, err error) Error {
+func NewCaused(causedBy CausedBy, err error) *Error {
 	switch causedBy {
 	case ByBug:
 		return NewBug(err)
@@ -250,8 +228,8 @@ func GetCausedBy(e error) CausedBy {
 	switch err := e.(type) {
 	case nil:
 		return NoError
-	case Error:
-		return err.CausedBy()
+	case *Error:
+		return err.CausedBy
 	default:
 		return ByBug
 	}
@@ -264,8 +242,8 @@ func GetPanicCausedBy(v interface{}) CausedBy {
 	switch err := v.(type) {
 	case nil:
 		return NoError
-	case Error:
-		return err.CausedBy()
+	case *Error:
+		return err.CausedBy
 	default:
 		return ByBug
 	}
