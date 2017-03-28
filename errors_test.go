@@ -200,19 +200,22 @@ var _ = Describe("errors", func() {
 
 		It("Include inner error", func() {
 			e := errors.New("foo")
-			e = errors.NewInput(e)
+			e = errors.Wrap(errors.ByBug, e, "bar")
 			msg := e.ErrorStack()
-			Ω(strings.Count(msg, "foo")).Should(Equal(2))
+			Ω(msg).Should(ContainSubstring("foo"))
+			Ω(msg).Should(ContainSubstring("bar"))
 			Ω(msg).Should(ContainSubstring("errors_test.go"))
 			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(2))
 		})
 
 		It("Include inner inner error", func() {
 			e := errors.New("foo")
-			e = errors.NewInput(e)
-			e = errors.NewBug(e)
+			e = errors.Wrap(errors.ByBug, e, "bar")
+			e = errors.Wrap(errors.ByBug, e, "blah")
 			msg := e.ErrorStack()
-			Ω(strings.Count(msg, "foo")).Should(Equal(2))
+			Ω(msg).Should(ContainSubstring("foo"))
+			Ω(msg).Should(ContainSubstring("bar"))
+			Ω(msg).Should(ContainSubstring("blah"))
 			Ω(msg).Should(ContainSubstring("errors_test.go"))
 			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(3))
 		})

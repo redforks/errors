@@ -110,17 +110,17 @@ func (err *Error) Stack() string {
 // error message and the callstack, and inner Error's ErrorStack().
 func (err *Error) ErrorStack() string {
 	r := err.Error() + "\n" + string(err.Stack())
-	e := err.Err
-	for {
-		if inner, ok := e.(*Error); ok {
-			r += "\nInner error stacktrace:\n"
-			r += inner.Stack()
-			e = inner.Err
-		} else {
-			break
-		}
+	if err.Err == nil {
+		return r
 	}
-	return r
+
+	r += "\nInner error:\n"
+	switch inner := err.Err.(type) {
+	case *Error:
+		return r + inner.ErrorStack()
+	default:
+		return r + inner.Error()
+	}
 }
 
 const MaxStackDepth = 50
