@@ -16,6 +16,7 @@
 package errors
 
 import (
+	"bytes"
 	syserr "errors"
 	"fmt"
 	"runtime"
@@ -88,11 +89,40 @@ func (err *Error) StackFrames() []StackFrame {
 	return err.frames
 }
 
+// Stack returns the callstack formatted the same way that go does
+// in runtime/debug.Stack()
+func (err *Error) Stack() string {
+	buf := bytes.Buffer{}
+
+	for _, frame := range err.StackFrames() {
+		buf.WriteString(frame.String())
+	}
+
+	return string(buf.Bytes())
+}
+
+// ErrorStack returns a string that contains both the
+// error message and the callstack, and inner Error's ErrorStack().
+func (err *Error) ErrorStack() string {
+	r := err.Error() + "\n" + string(err.Stack())
+	e := err.Err
+	for {
+		if inner, ok := e.(*Error); ok {
+			r += "\nInner error stacktrace:\n"
+			r += inner.Stack()
+			e = inner.Err
+		} else {
+			break
+		}
+	}
+	return r
+}
+
 const MaxStackDepth = 50
 
 // New function replace of standard errors.New(), create a ByBug error.
 func New(text string) *Error {
-	return NewBug(syserr.New(text))
+	return wrap(syserr.New(text), ByBug)
 }
 
 func wrap(e error, causedBy CausedBy) *Error {
@@ -101,7 +131,7 @@ func wrap(e error, causedBy CausedBy) *Error {
 	}
 
 	stack := make([]uintptr, MaxStackDepth)
-	length := runtime.Callers(2, stack[:])
+	length := runtime.Callers(3, stack[:])
 	stack = stack[:length]
 	return &Error{
 		Err:   e,
@@ -137,63 +167,52 @@ func NewInput(e error) *Error {
 
 // Bug creates an Error from string.
 func Bug(text string) *Error {
-	return NewBug(syserr.New(text))
+	return wrap(syserr.New(text), ByBug)
 }
 
 // Bugf sprintf version of Bug().
 func Bugf(text string, a ...interface{}) *Error {
-	return Bug(fmt.Sprintf(text, a...))
+	return wrap(fmt.Errorf(text, a...), ByBug)
 }
 
 // Runtime creates an Error from string.
 func Runtime(text string) *Error {
-	return NewRuntime(syserr.New(text))
+	return wrap(syserr.New(text), ByRuntime)
 }
 
 // Runtimef sprintf version of Runtime().
 func Runtimef(text string, a ...interface{}) *Error {
-	return Runtime(fmt.Sprintf(text, a...))
+	return wrap(fmt.Errorf(text, a...), ByRuntime)
 }
 
 // External creates an Error from string.
 func External(text string) *Error {
-	return NewExternal(syserr.New(text))
+	return wrap(syserr.New(text), ByExternal)
 }
 
 // Externalf sprintf version of Runtime().
 func Externalf(text string, a ...interface{}) *Error {
-	return External(fmt.Sprintf(text, a...))
+	return wrap(fmt.Errorf(text, a...), ByExternal)
 }
 
 // Input creates an Error from string.
 func Input(text string) *Error {
-	return NewInput(syserr.New(text))
+	return wrap(syserr.New(text), ByInput)
 }
 
 // Inputf sprintf version of Input.
 func Inputf(text string, a ...interface{}) *Error {
-	return Input(fmt.Sprintf(text, a...))
+	return wrap(fmt.Errorf(text, a...), ByInput)
 }
 
 // Caused create error causedBy set by argument
 func Caused(causedBy CausedBy, text string) *Error {
-	switch causedBy {
-	case ByBug:
-		return Bug(text)
-	case ByInput:
-		return Input(text)
-	case ByExternal:
-		return External(text)
-	case ByRuntime:
-		return Runtime(text)
-	default:
-		panic("Unknown causedBy")
-	}
+	return wrap(syserr.New(text), causedBy)
 }
 
 // Causedf sprintf version of Caused
 func Causedf(causedBy CausedBy, text string, a ...interface{}) *Error {
-	return Caused(causedBy, fmt.Sprintf(text, a...))
+	return wrap(fmt.Errorf(text, a...), causedBy)
 }
 
 // NewCaused wraps an exist error to specified causedBy Error,
@@ -201,18 +220,7 @@ func Causedf(causedBy CausedBy, text string, a ...interface{}) *Error {
 // If already an Error, returned directly if causedBy matches, re-wrap
 // with specific causedBy if not matched.
 func NewCaused(causedBy CausedBy, err error) *Error {
-	switch causedBy {
-	case ByBug:
-		return NewBug(err)
-	case ByInput:
-		return NewInput(err)
-	case ByExternal:
-		return NewExternal(err)
-	case ByRuntime:
-		return NewRuntime(err)
-	default:
-		panic("Unknown causedBy")
-	}
+	return wrap(err, causedBy)
 }
 
 // GetCausedBy from any error. If the error is Error interface, call its
@@ -246,5 +254,21 @@ func GetPanicCausedBy(v interface{}) CausedBy {
 		return err.CausedBy
 	default:
 		return ByBug
+	}
+}
+
+// ForLog convert value to string for better logging:
+//
+//  1. if v is *Error, use .ErrorStack
+//  2. if v is error, use .Error()
+//  3. otherwise, use fmt.Sprint(v)
+func ForLog(v interface{}) string {
+	switch e := v.(type) {
+	case *Error:
+		return e.ErrorStack()
+	case error:
+		return e.Error()
+	default:
+		return fmt.Sprint(v)
 	}
 }

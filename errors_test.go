@@ -2,6 +2,7 @@ package errors_test
 
 import (
 	syserr "errors"
+	"strings"
 
 	. "github.com/onsi/ginkgo/extensions/table"
 
@@ -68,7 +69,7 @@ var _ = Describe("errors", func() {
 			}
 			e := errors.Caused(alter, "foo")
 			e = errors.NewCaused(cause, e)
-			Ω(e).Should(MatchError("foo"))
+			Ω(e.Error()).Should(Equal("foo"))
 			Ω(e.CausedBy).Should(Equal(cause))
 		},
 			Entry("ByBug", errors.ByBug),
@@ -148,18 +149,86 @@ var _ = Describe("errors", func() {
 	It("Causedf", func() {
 		e := errors.Causedf(errors.ByInput, "foo %d", 3)
 		Ω(e.CausedBy).Should(Equal(errors.ByInput))
-		Ω(e.Error()).Should(HavePrefix("foo 3"))
+		Ω(e.Error()).Should(Equal("foo 3"))
 	})
 
 	DescribeTable("NewCaused", func(causedBy errors.CausedBy) {
 		e := syserr.New("foo")
 		er := errors.NewCaused(causedBy, e)
 		Ω(er.CausedBy).Should(Equal(causedBy))
-		Ω(er.Error()).Should(HavePrefix("foo"))
+		Ω(er.Error()).Should(Equal("foo"))
 	},
 		Entry("ByInput", errors.ByInput),
 		Entry("ByBug", errors.ByBug),
 		Entry("ByExternal", errors.ByExternal),
 		Entry("ByRuntime", errors.ByRuntime),
 	)
+
+	DescribeTable("stacktrace", func(e *errors.Error) {
+		stack := e.Stack()
+		Ω(stack).Should(ContainSubstring("errors_test.go"))
+		Ω(stack).ShouldNot(ContainSubstring("errors.go"))
+	},
+		Entry("New", errors.New("foo")),
+		Entry("NewBug", errors.NewBug(syserr.New("foo"))),
+		Entry("NewRuntime", errors.NewRuntime(syserr.New("foo"))),
+		Entry("NewExternal", errors.NewExternal(syserr.New("foo"))),
+		Entry("NewInput", errors.NewInput(syserr.New("foo"))),
+		Entry("Bug", errors.Bug("foo")),
+		Entry("Bugf", errors.Bugf("foo, %s", 1)),
+		Entry("Runtime", errors.Runtime("foo")),
+		Entry("Runtimef", errors.Runtimef("foo, %s", 1)),
+		Entry("External", errors.External("foo")),
+		Entry("Externalf", errors.Externalf("foo, %s", 1)),
+		Entry("Input", errors.Input("foo")),
+		Entry("Inputf", errors.Inputf("foo, %s", 1)),
+		Entry("Caused", errors.Caused(errors.ByInput, "foo")),
+		Entry("Causedf", errors.Causedf(errors.ByInput, "foo %d", 1)),
+		Entry("NewCaused", errors.NewCaused(errors.ByInput, syserr.New("foo"))),
+	)
+
+	Context("ErrorStack", func() {
+		It("Include stack and msg", func() {
+			e := errors.New("foo")
+			msg := e.ErrorStack()
+			Ω(msg).Should(HavePrefix("foo\n"))
+			Ω(msg).Should(ContainSubstring("errors_test.go"))
+			Ω(msg).ShouldNot(ContainSubstring("errors.go"))
+		})
+
+		It("Include inner error", func() {
+			e := errors.New("foo")
+			e = errors.NewInput(e)
+			msg := e.ErrorStack()
+			Ω(strings.Count(msg, "foo")).Should(Equal(2))
+			Ω(msg).Should(ContainSubstring("errors_test.go"))
+			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(2))
+		})
+
+		It("Include inner inner error", func() {
+			e := errors.New("foo")
+			e = errors.NewInput(e)
+			e = errors.NewBug(e)
+			msg := e.ErrorStack()
+			Ω(strings.Count(msg, "foo")).Should(Equal(2))
+			Ω(msg).Should(ContainSubstring("errors_test.go"))
+			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(3))
+		})
+	})
+
+	Context("ForLog", func() {
+
+		It("*Error", func() {
+			Ω(errors.ForLog(errors.Bug("foo"))).Should(HavePrefix("foo\n"))
+		})
+
+		It("error", func() {
+			Ω(errors.ForLog(syserr.New("foo"))).Should(Equal("foo"))
+		})
+
+		It("other", func() {
+			Ω(errors.ForLog(1)).Should(Equal("1"))
+		})
+	})
+
 })
