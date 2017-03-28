@@ -20,6 +20,7 @@ import (
 	syserr "errors"
 	"fmt"
 	"runtime"
+	"runtime/debug"
 )
 
 // CausedBy describe who caused this error.
@@ -306,6 +307,7 @@ func ForLog(v interface{}) string {
 	case error:
 		return e.Error()
 	default:
-		return fmt.Sprint(v)
+		// If a value is not error, then it must recovered from panic
+		return fmt.Sprintf("%v\n%s", v, string(debug.Stack()))
 	}
 }

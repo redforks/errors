@@ -232,7 +232,7 @@ var _ = Describe("errors", func() {
 		})
 
 		It("other", func() {
-			Ω(errors.ForLog(1)).Should(Equal("1"))
+			Ω(errors.ForLog(1)).Should(HavePrefix("1\n"))
 		})
 	})
 
