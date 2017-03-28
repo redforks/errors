@@ -65,6 +65,8 @@ const (
 type Error struct {
 	Err error
 
+	msg string // overloaded error message
+
 	stack  []uintptr
 	frames []StackFrame
 
@@ -72,6 +74,9 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
+	if e.msg != "" {
+		return e.msg
+	}
 	return e.Err.Error()
 }
 
@@ -123,6 +128,38 @@ const MaxStackDepth = 50
 // New function replace of standard errors.New(), create a ByBug error.
 func New(text string) *Error {
 	return wrap(syserr.New(text), ByBug)
+}
+
+// Wrap an exist error
+func Wrap(causedBy CausedBy, err interface{}, text string) *Error {
+	var (
+		er error
+		ok bool
+	)
+
+	if er, ok = err.(error); !ok {
+		er = fmt.Errorf("%v", err)
+	}
+
+	e := wrap(er, causedBy)
+	e.msg = text
+	return e
+}
+
+// Wrapf is format version of Wrap()
+func Wrapf(causedBy CausedBy, err interface{}, text string, a ...interface{}) *Error {
+	var (
+		er error
+		ok bool
+	)
+
+	if er, ok = err.(error); !ok {
+		er = fmt.Errorf("%v", err)
+	}
+
+	e := wrap(er, causedBy)
+	e.msg = fmt.Sprintf(text, a...)
+	return e
 }
 
 func wrap(e error, causedBy CausedBy) *Error {

@@ -185,6 +185,8 @@ var _ = Describe("errors", func() {
 		Entry("Caused", errors.Caused(errors.ByInput, "foo")),
 		Entry("Causedf", errors.Causedf(errors.ByInput, "foo %d", 1)),
 		Entry("NewCaused", errors.NewCaused(errors.ByInput, syserr.New("foo"))),
+		Entry("Wrap", errors.Wrap(errors.ByInput, syserr.New("foo"), "bla")),
+		Entry("Wrapf", errors.Wrapf(errors.ByInput, syserr.New("foo"), "bla %s", 1)),
 	)
 
 	Context("ErrorStack", func() {
@@ -228,6 +230,35 @@ var _ = Describe("errors", func() {
 
 		It("other", func() {
 			Ω(errors.ForLog(1)).Should(Equal("1"))
+		})
+	})
+
+	Context("Wrap", func() {
+
+		It("Wrap", func() {
+			inner := syserr.New("foo")
+			e := errors.Wrap(errors.ByBug, inner, "bar")
+			Ω(e.Error()).Should(Equal("bar"))
+			Ω(e.Err).Should(Equal(inner))
+		})
+
+		It("Wrapf", func() {
+			inner := syserr.New("foo")
+			e := errors.Wrapf(errors.ByBug, inner, "foo %s", "bar")
+			Ω(e.Error()).Should(Equal("foo bar"))
+			Ω(e.Err).Should(Equal(inner))
+		})
+
+		It("Wrap any value", func() {
+			e := errors.Wrap(errors.ByBug, "foo", "bar")
+			Ω(e.Error()).Should(Equal("bar"))
+			Ω(e.Err).Should(Equal(syserr.New("foo")))
+		})
+
+		It("Wrapf any value", func() {
+			e := errors.Wrapf(errors.ByBug, "foo", "foo %s", "bar")
+			Ω(e.Error()).Should(Equal("foo bar"))
+			Ω(e.Err).Should(Equal(syserr.New("foo")))
 		})
 	})
 
