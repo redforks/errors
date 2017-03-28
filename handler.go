@@ -19,6 +19,8 @@ type Handler func(ctx context.Context, err interface{})
 // handler, default handler is a plain log.Print(), if ctx is nil, pass
 // context.Background() to error handler.
 func Handle(ctx context.Context, err interface{}) {
+	log.Print(ForLog(err))
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -43,7 +45,6 @@ func SetHandler(h Handler) {
 }
 
 func defaultHandler(ctx context.Context, err interface{}) {
-	log.Print(err)
 }
 
 func inTestMode() bool {
