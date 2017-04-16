@@ -74,11 +74,11 @@ type Error struct {
 	CausedBy CausedBy
 }
 
-func (e *Error) Error() string {
-	if e.msg != "" {
-		return e.msg
+func (err *Error) Error() string {
+	if err.msg != "" {
+		return err.msg
 	}
-	return e.Err.Error()
+	return err.Err.Error()
 }
 
 // StackFrames returns an array of frames containing information about the
@@ -110,7 +110,7 @@ func (err *Error) Stack() string {
 // ErrorStack returns a string that contains both the
 // error message and the callstack, and inner Error's ErrorStack().
 func (err *Error) ErrorStack() string {
-	r := err.Error() + "\n" + string(err.Stack())
+	r := err.Error() + "\n" + err.Stack()
 	if err.Err == nil {
 		return r
 	}
@@ -124,7 +124,7 @@ func (err *Error) ErrorStack() string {
 	}
 }
 
-const MaxStackDepth = 50
+const maxStackDepth = 50
 
 // New function replace of standard errors.New(), create a ByBug error.
 func New(text string) *Error {
@@ -168,7 +168,7 @@ func wrap(e error, causedBy CausedBy) *Error {
 		return nil
 	}
 
-	stack := make([]uintptr, MaxStackDepth)
+	stack := make([]uintptr, maxStackDepth)
 	length := runtime.Callers(3, stack[:])
 	stack = stack[:length]
 	return &Error{

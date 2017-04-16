@@ -42,7 +42,7 @@ var _ = Describe("handler", func() {
 			Ω(ctx).Should(Equal(context.Background()))
 		})
 
-		errors.Handle(nil, 2)
+		errors.Handle(nil, 2) // nolint:staticcheck
 		Ω(called).Should(Equal(1))
 	})
 
