@@ -62,7 +62,7 @@ func handleError(v interface{}) {
 		buf := make([]byte, 16*1024)
 		buf = buf[0:runtime.Stack(buf, true)]
 		fmt.Fprintln(os.Stderr, string(buf))
-	case errors.ByInput, errors.ByExternal:
+	case errors.ByInput, errors.ByExternal, errors.ByClientBug:
 		fmt.Println(v)
 	default:
 		panic("Unknown CausedBy")
