@@ -57,6 +57,11 @@ const (
 	// not need report to error report service or health monitor service.
 	ByInput
 
+	// ByClientBug error caused by wrong implemented client software, such as
+	// wrong argument. ByInput is error caused by user. Normally ByClientBug not
+	// report to health/crash report service.
+	ByClientBug
+
 	// NoError is a special value returned by GetPanicCausedBy() to indicate no
 	// error happened
 	NoError
@@ -180,27 +185,33 @@ func wrap(e error, causedBy CausedBy) *Error {
 }
 
 // NewBug wrap an exist error to ByBug. If e is nil, return nil. If e is
-// already an Error, abort the wrap.
+// already an Error, wrap it to ByBug.
 func NewBug(e error) *Error {
 	return wrap(e, ByBug)
 }
 
 // NewRuntime wrap an exist error to ByRuntime. If e is nil, return nil. If e is
-// already an Error, abort the wrap.
+// already an Error, wrap it to ByRuntime.
 func NewRuntime(e error) *Error {
 	return wrap(e, ByRuntime)
 }
 
 // NewExternal wrap an exist error to ByRuntime. If e is nil, return nil. If e is
-// already an Error, abort the wrap.
+// already an Error, wrap it to ByExternal.
 func NewExternal(e error) *Error {
 	return wrap(e, ByExternal)
 }
 
 // NewInput wrap an exist error to ByRuntime. If e is nil, return nil. If e is
-// already an Error, abort the wrap.
+// already an Error, wrap it to ByInput.
 func NewInput(e error) *Error {
 	return wrap(e, ByInput)
+}
+
+// NewClientBug wrap an exist error to ByRuntime. If e is nil, return nil. If e is
+// already an Error, wrap it to ByClientBug.
+func NewClientBug(e error) *Error {
+	return wrap(e, ByClientBug)
 }
 
 // Bug creates an Error from string.
@@ -241,6 +252,16 @@ func Input(text string) *Error {
 // Inputf sprintf version of Input.
 func Inputf(text string, a ...interface{}) *Error {
 	return wrap(fmt.Errorf(text, a...), ByInput)
+}
+
+// ClientBug creates an Error from string.
+func ClientBug(text string) *Error {
+	return wrap(syserr.New(text), ByClientBug)
+}
+
+// ClientBugf sprintf version of ClientBug.
+func ClientBugf(text string, a ...interface{}) *Error {
+	return wrap(fmt.Errorf(text, a...), ByClientBug)
 }
 
 // Caused create error causedBy set by argument

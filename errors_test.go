@@ -21,87 +21,57 @@ var _ = Describe("errors", func() {
 	}
 
 	Context("Wrap error", func() {
+		cases := []TableEntry{
+			Entry("Bug", errors.ByBug, errors.NewBug),
+			Entry("Runtime", errors.ByRuntime, errors.NewRuntime),
+			Entry("External", errors.ByExternal, errors.NewExternal),
+			Entry("Input", errors.ByInput, errors.NewInput),
+			Entry("ClientBug", errors.ByClientBug, errors.NewClientBug),
+		}
 
-		It("New", func() {
-			assertError(errors.New("foo"), "foo", errors.ByBug)
-		})
+		DescribeTable("not nil", func(causedBy errors.CausedBy, fn func(err error) *errors.Error) {
+			assertError(fn(syserr.New("foo")), "foo", causedBy)
+		}, cases...)
 
-		It("NewBug", func() {
-			assertError(errors.NewBug(syserr.New("foo")), "foo", errors.ByBug)
-		})
+		DescribeTable("nil", func(causedBy errors.CausedBy, fn func(err error) *errors.Error) {
+			Ω(fn(nil)).Should(BeNil())
+		}, cases...)
 
-		It("NewRuntime", func() {
-			assertError(errors.NewRuntime(syserr.New("foo")), "foo", errors.ByRuntime)
-		})
-
-		It("NewExternal", func() {
-			assertError(errors.NewExternal(syserr.New("foo")), "foo", errors.ByExternal)
-		})
-
-		It("NewInput", func() {
-			assertError(errors.NewInput(syserr.New("foo")), "foo", errors.ByInput)
-		})
-
-		Context("Not wrap nil", func() {
-
-			It("NewBug", func() {
-				Ω(errors.NewBug(nil)).Should(BeNil())
-			})
-
-			It("NewRuntime", func() {
-				Ω(errors.NewRuntime(nil)).Should(BeNil())
-			})
-
-			It("NewInput", func() {
-				Ω(errors.NewInput(nil)).Should(BeNil())
-			})
-
-			It("NewExternal", func() {
-				Ω(errors.NewExternal(nil)).Should(BeNil())
-			})
-
-		})
-
-		DescribeTable("Rewrap", func(cause errors.CausedBy) {
+		DescribeTable("Rewrap", func(cause errors.CausedBy, fn func(err error) *errors.Error) {
 			alter := errors.ByRuntime
 			if cause == errors.ByRuntime {
 				alter = errors.ByBug
 			}
 			e := errors.Caused(alter, "foo")
-			e = errors.NewCaused(cause, e)
+			e = fn(e)
 			Ω(e.Error()).Should(Equal("foo"))
 			Ω(e.CausedBy).Should(Equal(cause))
-		},
-			Entry("ByBug", errors.ByBug),
-			Entry("ByRuntime", errors.ByRuntime),
-			Entry("ByExternal", errors.ByExternal),
-			Entry("ByInput", errors.ByInput),
-		)
+		}, cases...)
 
 	})
 
 	Context("From error text", func() {
 
-		It("Bug", func() {
-			assertError(errors.Bug("foo"), "foo", errors.ByBug)
-			assertError(errors.Bugf("foo %s", "bar"), "foo bar", errors.ByBug)
-		})
+		DescribeTable("without format", func(causedBy errors.CausedBy, fn func(msg string) *errors.Error) {
+			assertError(fn("foo"), "foo", causedBy)
+		},
+			Entry("New", errors.ByBug, errors.New),
+			Entry("Bug", errors.ByBug, errors.Bug),
+			Entry("Runtime", errors.ByRuntime, errors.Runtime),
+			Entry("External", errors.ByExternal, errors.External),
+			Entry("Input", errors.ByInput, errors.Input),
+			Entry("ClientBug", errors.ByClientBug, errors.ClientBug),
+		)
 
-		It("Runtime", func() {
-			assertError(errors.Runtime("foo"), "foo", errors.ByRuntime)
-			assertError(errors.Runtimef("foo %s", "bar"), "foo bar", errors.ByRuntime)
-		})
-
-		It("External", func() {
-			assertError(errors.External("foo"), "foo", errors.ByExternal)
-			assertError(errors.Externalf("foo %s", "bar"), "foo bar", errors.ByExternal)
-		})
-
-		It("Input", func() {
-			assertError(errors.Input("foo"), "foo", errors.ByInput)
-			assertError(errors.Inputf("foo %s", "bar"), "foo bar", errors.ByInput)
-		})
-
+		DescribeTable("with format", func(causedBy errors.CausedBy, fn func(text string, a ...interface{}) *errors.Error) {
+			assertError(fn("foo %s", "bar"), "foo bar", causedBy)
+		},
+			Entry("Bug", errors.ByBug, errors.Bugf),
+			Entry("Runtime", errors.ByRuntime, errors.Runtimef),
+			Entry("External", errors.ByExternal, errors.Externalf),
+			Entry("Input", errors.ByInput, errors.Inputf),
+			Entry("ClientBug", errors.ByClientBug, errors.ClientBugf),
+		)
 	})
 
 	Context("GetCausedBy", func() {
@@ -162,6 +132,7 @@ var _ = Describe("errors", func() {
 		Entry("ByBug", errors.ByBug),
 		Entry("ByExternal", errors.ByExternal),
 		Entry("ByRuntime", errors.ByRuntime),
+		Entry("ByClientBug", errors.ByClientBug),
 	)
 
 	DescribeTable("stacktrace", func(e *errors.Error) {
@@ -182,6 +153,7 @@ var _ = Describe("errors", func() {
 		Entry("Externalf", errors.Externalf("foo, %s", 1)),
 		Entry("Input", errors.Input("foo")),
 		Entry("Inputf", errors.Inputf("foo, %s", 1)),
+		Entry("ClientBug", errors.ClientBugf("foo, %s", 1)),
 		Entry("Caused", errors.Caused(errors.ByInput, "foo")),
 		Entry("Causedf", errors.Causedf(errors.ByInput, "foo %d", 1)),
 		Entry("NewCaused", errors.NewCaused(errors.ByInput, syserr.New("foo"))),
