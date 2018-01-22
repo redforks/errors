@@ -62,16 +62,16 @@ func (err *Error) Stack() string {
 // ErrorStack returns a string that contains both the
 // error message and the callstack, and inner Error's ErrorStack().
 func (err *Error) ErrorStack() string {
-	r := err.Error() + "\n" + err.Stack()
-	if err.Err == nil {
-		return r
-	}
+	return err.Error() + "\n" + err.Stack()
+	// if err.Err == nil {
+	// 	return r
+	// }
 
-	r += "\nInner error:\n"
-	switch inner := err.Err.(type) {
-	case CausedByError:
-		return r + inner.ErrorStack()
-	default:
-		return r + inner.Error()
-	}
+	// r += "\nInner error:\n"
+	// switch inner := err.Err.(type) {
+	// case CausedByError:
+	// 	return r + inner.ErrorStack()
+	// default:
+	// 	return r + inner.Error()
+	// }
 }

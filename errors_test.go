@@ -169,28 +169,6 @@ var _ = Describe("errors", func() {
 			Ω(msg).Should(ContainSubstring("errors_test.go"))
 			Ω(msg).ShouldNot(ContainSubstring("errors.go"))
 		})
-
-		It("Include inner error", func() {
-			e := errors.New("foo")
-			e = errors.Wrap(errors.ByBug, e, "bar")
-			msg := e.ErrorStack()
-			Ω(msg).Should(ContainSubstring("foo"))
-			Ω(msg).Should(ContainSubstring("bar"))
-			Ω(msg).Should(ContainSubstring("errors_test.go"))
-			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(2))
-		})
-
-		It("Include inner inner error", func() {
-			e := errors.New("foo")
-			e = errors.Wrap(errors.ByBug, e, "bar")
-			e = errors.Wrap(errors.ByBug, e, "blah")
-			msg := e.ErrorStack()
-			Ω(msg).Should(ContainSubstring("foo"))
-			Ω(msg).Should(ContainSubstring("bar"))
-			Ω(msg).Should(ContainSubstring("blah"))
-			Ω(msg).Should(ContainSubstring("errors_test.go"))
-			Ω(strings.Count(msg, "errors_test.go")).Should(Equal(3))
-		})
 	})
 
 	Context("ForLog", func() {
@@ -205,6 +183,16 @@ var _ = Describe("errors", func() {
 
 		It("other", func() {
 			Ω(errors.ForLog(1)).Should(HavePrefix("1\n"))
+		})
+
+		It("inner error", func() {
+			e := errors.Wrap(errors.ByInput, errors.Bug("foo"), "bar")
+			s := errors.ForLog(e)
+			idxBar := strings.Index(s, "bar")
+			idxFoo := strings.Index(s, "Inner error:\nfoo")
+			Ω(idxFoo > idxBar).Should(BeTrue())
+			Ω(idxBar).Should(BeNumerically(">", -1))
+			Ω(idxFoo).Should(BeNumerically(">", -1))
 		})
 	})
 

@@ -11,6 +11,6 @@ type CausedByError interface {
 	Code() Code
 
 	// ErrorStack returns a string that contains both the
-	// error message and the callstack, and inner Error's ErrorStack().
+	// error message and the callstack.
 	ErrorStack() string
 }

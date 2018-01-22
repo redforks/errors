@@ -230,7 +230,11 @@ func GetCode(v interface{}) Code {
 func ForLog(v interface{}) string {
 	switch e := v.(type) {
 	case *Error:
-		return e.ErrorStack()
+		s := e.ErrorStack()
+		if inner := e.Inner(); inner != nil {
+			s += "\nInner error:\n" + ForLog(inner)
+		}
+		return s
 	case error:
 		return e.Error()
 	default:
