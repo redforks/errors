@@ -17,7 +17,7 @@ var _ = Describe("errors", func() {
 
 	assertError := func(e *errors.Error, msg string, causedBy errors.CausedBy) {
 		Ω(e.Error()).Should(Equal(msg))
-		Ω(e.CausedBy).Should(Equal(causedBy))
+		Ω(e.Code().Caused()).Should(Equal(causedBy))
 	}
 
 	Context("Wrap error", func() {
@@ -45,7 +45,7 @@ var _ = Describe("errors", func() {
 			e := errors.Caused(alter, "foo")
 			e = fn(e)
 			Ω(e.Error()).Should(Equal("foo"))
-			Ω(e.CausedBy).Should(Equal(cause))
+			Ω(e.Code().Caused()).Should(Equal(cause))
 		}, cases...)
 
 	})
@@ -108,7 +108,7 @@ var _ = Describe("errors", func() {
 	})
 
 	DescribeTable("Caused", func(causedBy errors.CausedBy) {
-		Ω(errors.Caused(causedBy, "foo").CausedBy).Should(Equal(causedBy))
+		Ω(errors.Caused(causedBy, "foo").Code().Caused()).Should(Equal(causedBy))
 	},
 		Entry("ByInput", errors.ByInput),
 		Entry("ByBug", errors.ByBug),
@@ -118,14 +118,14 @@ var _ = Describe("errors", func() {
 
 	It("Causedf", func() {
 		e := errors.Causedf(errors.ByInput, "foo %d", 3)
-		Ω(e.CausedBy).Should(Equal(errors.ByInput))
+		Ω(e.Code().Caused()).Should(Equal(errors.ByInput))
 		Ω(e.Error()).Should(Equal("foo 3"))
 	})
 
 	DescribeTable("NewCaused", func(causedBy errors.CausedBy) {
 		e := syserr.New("foo")
 		er := errors.NewCaused(causedBy, e)
-		Ω(er.CausedBy).Should(Equal(causedBy))
+		Ω(er.Code().Caused()).Should(Equal(causedBy))
 		Ω(er.Error()).Should(Equal("foo"))
 	},
 		Entry("ByInput", errors.ByInput),
