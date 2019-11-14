@@ -33,6 +33,11 @@ func (err *Error) Inner() error {
 	return err.Err
 }
 
+// Unwrap is alias of Inner method, work with errors.Unwrap() of go 1.13
+func (err *Error) Unwrap() error {
+	return err.Err
+}
+
 // StackFrames returns an array of frames containing information about the
 // stack.
 func (err *Error) StackFrames() []StackFrame {
